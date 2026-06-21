@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -32,11 +32,29 @@ class ShopService:
         keyword: str | None,
         genre_id: int | None,
         q: str | None,
+        search: str | None,
+        open_day_of_week: int | None,
+        open_time: str | None,
         page: int,
         per_page: int,
     ) -> ShopListResponse:
         page = max(page, 1)
         per_page = min(max(per_page, 1), 100)
+        parsed_open_time: time | None = None
+        if open_time is not None:
+            try:
+                hour, minute = open_time.split(":", 1)
+                parsed_open_time = time(int(hour), int(minute))
+            except (ValueError, AttributeError) as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="営業時刻の形式が不正です",
+                ) from exc
+        if (open_day_of_week is None) != (parsed_open_time is None):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="営業時刻の検索には曜日と時刻の両方が必要です",
+            )
         shops, total = self.repo.search(
             aid,
             station=station,
@@ -44,6 +62,9 @@ class ShopService:
             keyword=keyword,
             genre_id=genre_id,
             q=q,
+            search=search,
+            open_day_of_week=open_day_of_week,
+            open_time=parsed_open_time,
             page=page,
             per_page=per_page,
         )

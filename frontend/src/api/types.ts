@@ -100,6 +100,9 @@ export interface ShopSearchParams {
   keyword?: string
   genre_id?: number
   q?: string
+  search?: string
+  open_day_of_week?: number
+  open_time?: string
   page?: number
   per_page?: number
 }

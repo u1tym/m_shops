@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { menuPageUrl } from '../config'
 
-defineProps<{
-  title: string
-  showBack?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    title: string
+    showBack?: boolean
+  }>(),
+  { showBack: true },
+)
 
 function goMenu(): void {
-  window.location.href = menuPageUrl
+  window.location.assign(menuPageUrl)
 }
 </script>
 
@@ -15,9 +18,10 @@ function goMenu(): void {
   <header class="app-header">
     <div class="header-left">
       <button
-        v-if="showBack !== false"
+        v-if="showBack"
         type="button"
         class="btn-back"
+        aria-label="メニューに戻る"
         @click="goMenu"
       >
         ← 戻る

@@ -130,6 +130,14 @@ function toggleGenre(id: number, checked: boolean): void {
   }
 }
 
+function setTodayVerified(): void {
+  const today = new Date()
+  const y = today.getFullYear()
+  const m = String(today.getMonth() + 1).padStart(2, '0')
+  const d = String(today.getDate()).padStart(2, '0')
+  lastVerifiedOn.value = `${y}-${m}-${d}`
+}
+
 function buildPayload(): ShopWriteInput {
   return {
     name: name.value.trim(),
@@ -255,7 +263,10 @@ onMounted(async () => {
           </label>
           <label>
             最終確認日
-            <input v-model="lastVerifiedOn" type="date" />
+            <div class="date-input-row">
+              <input v-model="lastVerifiedOn" type="date" />
+              <button type="button" class="btn small" @click="setTodayVerified">今日</button>
+            </div>
           </label>
           <label>
             営業メモ（祝日など）
@@ -268,7 +279,15 @@ onMounted(async () => {
         </section>
 
         <section>
-          <h3>ジャンル</h3>
+          <div class="section-head">
+            <h3>ジャンル</h3>
+            <button type="button" class="btn small" @click="router.push({ name: 'genres' })">
+              ジャンル管理
+            </button>
+          </div>
+          <p v-if="genres.length === 0" class="hint">
+            ジャンルがありません。「ジャンル管理」から追加してください。
+          </p>
           <div class="genre-checkboxes">
             <label v-for="g in genres" :key="g.id" class="checkbox-label">
               <input

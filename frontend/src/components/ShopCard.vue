@@ -3,11 +3,20 @@ import type { ShopSummary } from '../api/types'
 
 defineProps<{
   shop: ShopSummary
+  clickable?: boolean
+}>()
+
+const emit = defineEmits<{
+  click: []
 }>()
 </script>
 
 <template>
-  <article class="shop-card">
+  <article
+    class="shop-card"
+    :class="{ 'shop-card--clickable': clickable }"
+    @click="clickable ? emit('click') : undefined"
+  >
     <div class="shop-card-head">
       <h2 class="shop-name">{{ shop.name }}</h2>
       <div v-if="shop.genres.length" class="genre-tags">
@@ -22,7 +31,7 @@ defineProps<{
       </li>
     </ul>
     <p v-if="shop.memo" class="shop-memo">{{ shop.memo }}</p>
-    <div class="shop-card-actions">
+    <div v-if="$slots.actions" class="shop-card-actions" @click.stop>
       <slot name="actions" />
     </div>
   </article>

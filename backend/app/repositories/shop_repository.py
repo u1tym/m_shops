@@ -1,6 +1,6 @@
 from datetime import date, datetime, time
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
@@ -52,12 +52,27 @@ class ShopRepository:
         keyword: str | None = None,
         genre_id: int | None = None,
         q: str | None = None,
+        search: str | None = None,
+        open_day_of_week: int | None = None,
+        open_time: time | None = None,
         page: int = 1,
         per_page: int = 20,
     ) -> tuple[list[Shop], int]:
         base = select(Shop).where(Shop.aid == aid, Shop.is_deleted.is_(False))
 
-        if q:
+        if search:
+            pattern = f"%{search}%"
+            sub_kw = (
+                select(ShopKeyword.shop_id)
+                .where(
+                    ShopKeyword.aid == aid,
+                    ShopKeyword.is_deleted.is_(False),
+                    ShopKeyword.keyword.ilike(pattern),
+                )
+                .distinct()
+            )
+            base = base.where(or_(Shop.name.ilike(pattern), Shop.id.in_(sub_kw)))
+        elif q:
             pattern = f"%{q}%"
             sub_kw = (
                 select(ShopKeyword.shop_id)
@@ -115,17 +130,37 @@ class ShopRepository:
                     .distinct()
                 )
                 base = base.where(Shop.id.in_(sub_kw))
-            if genre_id is not None:
-                sub_genre = (
-                    select(ShopGenre.shop_id)
-                    .where(
-                        ShopGenre.aid == aid,
-                        ShopGenre.is_deleted.is_(False),
-                        ShopGenre.genre_id == genre_id,
-                    )
-                    .distinct()
+
+        if genre_id is not None:
+            sub_genre = (
+                select(ShopGenre.shop_id)
+                .where(
+                    ShopGenre.aid == aid,
+                    ShopGenre.is_deleted.is_(False),
+                    ShopGenre.genre_id == genre_id,
                 )
-                base = base.where(Shop.id.in_(sub_genre))
+                .distinct()
+            )
+            base = base.where(Shop.id.in_(sub_genre))
+
+        if open_day_of_week is not None and open_time is not None:
+            open_at = self._open_at_time_condition(open_time)
+            sub_open = (
+                select(ShopOpeningSlot.shop_id)
+                .join(
+                    ShopOpeningDay,
+                    ShopOpeningSlot.opening_day_id == ShopOpeningDay.id,
+                )
+                .where(
+                    ShopOpeningSlot.aid == aid,
+                    ShopOpeningSlot.is_deleted.is_(False),
+                    ShopOpeningDay.is_deleted.is_(False),
+                    ShopOpeningDay.day_of_week == open_day_of_week,
+                    open_at,
+                )
+                .distinct()
+            )
+            base = base.where(Shop.id.in_(sub_open))
 
         count_stmt = select(func.count()).select_from(base.subquery())
         total = int(self.db.scalar(count_stmt) or 0)
@@ -142,6 +177,24 @@ class ShopRepository:
         )
         items = list(self.db.scalars(stmt).unique().all())
         return items, total
+
+    @staticmethod
+    def _open_at_time_condition(check_time: time):
+        """指定時刻が営業時間帯内か（日跨ぎは close_time < open_time）。"""
+        return or_(
+            and_(
+                ShopOpeningSlot.open_time <= ShopOpeningSlot.close_time,
+                ShopOpeningSlot.open_time <= check_time,
+                ShopOpeningSlot.close_time >= check_time,
+            ),
+            and_(
+                ShopOpeningSlot.close_time < ShopOpeningSlot.open_time,
+                or_(
+                    ShopOpeningSlot.open_time <= check_time,
+                    ShopOpeningSlot.close_time >= check_time,
+                ),
+            ),
+        )
 
     def get_genres_by_ids(self, aid: int, genre_ids: list[int]) -> list[Genre]:
         if not genre_ids:

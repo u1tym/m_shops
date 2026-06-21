@@ -106,3 +106,15 @@ export async function createGenre(name: string, sort_order = 0): Promise<Genre> 
   const { data } = await shopsClient.post<{ genre: Genre }>('/genres', { name, sort_order })
   return data.genre
 }
+
+export async function updateGenre(
+  genreId: number,
+  body: { name?: string; sort_order?: number },
+): Promise<Genre> {
+  const { data } = await shopsClient.patch<{ genre: Genre }>(`/genres/${genreId}`, body)
+  return data.genre
+}
+
+export async function deleteGenre(genreId: number): Promise<void> {
+  await shopsClient.delete(`/genres/${genreId}`)
+}
