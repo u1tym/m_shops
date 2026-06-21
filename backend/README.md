@@ -47,12 +47,33 @@ psql -h localhost -U tamtuser -d tamtdb -f ..\DB\1_db.sql
 
 ### 2. 仮想環境の作成と依存パッケージのインストール
 
+**uvicorn だけ入っていても起動できません。** `requirements.txt` のパッケージをすべてインストールしてください。
+
+**Windows（PowerShell）**
+
 ```powershell
 cd backend
 python -m venv env
 .\env\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
+
+**Linux / macOS**
+
+```bash
+cd backend
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+インストール確認:
+
+```bash
+python -c "import pydantic_settings; print('ok')"
+```
+
+`ok` と表示されれば依存パッケージは揃っています。
 
 ### 3. 環境変数（`.env`）の設定
 
@@ -86,10 +107,25 @@ API_PUBLIC_PREFIX=/api/shops
 
 ### 開発（ホットリロードあり）
 
+仮想環境を有効化したうえで、`backend` ディレクトリから起動します。
+
+**Windows（PowerShell）**
+
 ```powershell
 cd backend
-.\env\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8000 --reload
+.\env\Scripts\Activate.ps1
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+**Linux / macOS**
+
+```bash
+cd backend
+source env/bin/activate
+uvicorn app.main:app --host 127.0.0.1 --port 9012 --reload
+```
+
+ポート番号は環境に合わせて変更してください（例: `9012`）。
 
 起動後、次の URL で確認できます。
 
@@ -173,6 +209,7 @@ curl http://127.0.0.1:8000/genres
 
 | 症状 | 確認すること |
 |------|----------------|
+| `ModuleNotFoundError: No module named 'pydantic_settings'` 等 | `pip install -r requirements.txt` を実行したか。仮想環境を有効化してから起動しているか（`which uvicorn` / `where uvicorn` でパスを確認） |
 | DB 接続エラー | `.env` の接続情報、PostgreSQL の起動、`shops` スキーマの作成 |
 | 401 Unauthorized | `DEBUG=false` のときは Cookie 付きリクエストが必要。開発時は `DEBUG=true` を確認 |
 | CORS エラー | `CORS_ORIGINS` にフロントエンドのオリジンが含まれているか |
