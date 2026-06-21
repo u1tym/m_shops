@@ -7,7 +7,7 @@ import ShopListView from '../views/ShopListView.vue'
 import ShopMapView from '../views/ShopMapView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'list', component: ShopListView },
     { path: '/map', name: 'map', component: ShopMapView },

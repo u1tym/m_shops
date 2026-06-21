@@ -5,6 +5,20 @@ function normalizeProxyTarget(raw: string): string {
   return raw.replace(/^http:\/\/localhost/i, 'http://127.0.0.1')
 }
 
+function normalizeBasePath(raw: string | undefined): string {
+  if (!raw || raw === '/') {
+    return '/'
+  }
+  let base = raw.trim()
+  if (!base.startsWith('/')) {
+    base = `/${base}`
+  }
+  if (!base.endsWith('/')) {
+    base = `${base}/`
+  }
+  return base
+}
+
 const DEFAULT_SHOPS_PROXY_TARGET = 'http://127.0.0.1:8000'
 const DEFAULT_LOGIN_PROXY_TARGET = 'http://127.0.0.1:8001'
 
@@ -20,6 +34,7 @@ export default defineConfig(({ mode }) => {
   const loginProxyTarget = normalizeProxyTarget(
     env.VITE_LOGIN_PROXY_TARGET || DEFAULT_LOGIN_PROXY_TARGET,
   )
+  const base = normalizeBasePath(env.VITE_BASE_PATH)
 
   const proxy: Record<string, object> = {}
   if (useShopsProxy) {
@@ -40,6 +55,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base,
     plugins: [vue()],
     server: {
       host: '127.0.0.1',
