@@ -1,0 +1,53 @@
+お店管理のアプリを作りたい。
+
+まずは、DBのテーブルを設計して欲しい。
+PostgreSQLを使う。
+
+ユーザ毎にアカウントID(ユーザID)を持っていて、
+                                          Table "public.accounts"
+    Column     |            Type             | Collation | Nullable |               Default
+---------------+-----------------------------+-----------+----------+--------------------------------------
+ id            | integer                     |           | not null | nextval('accounts_id_seq'::regclass)
+ username      | character varying           |           | not null |
+ password      | character varying           |           | not null |
+ session_info  | text                        |           |          |
+ last_access   | timestamp without time zone |           | not null |
+ is_deleted    | boolean                     |           | not null |
+ created_at    | timestamp without time zone |           | not null | now()
+ updated_at    | timestamp without time zone |           | not null | now()
+ random_number | integer                     |           |          |
+ email         | text                        |           |          |
+ のidをaidで外部参照することを仕様に追記して。
+というテーブルで管理している。
+
+今回作成するテーブルに、aid（accountsのidを外部参照）を追加して、ユーザ毎に管理できるようにして。
+
+スキーマ shops を作って、その中でテーブルを作成して欲しい。
+
+
+店の情報として、管理したい項目は以下のとおり。
+店名
+ジャンル
+曜日毎の営業時間（休憩なども考慮して、複数時間帯を可能にする）、補足メモ
+曜日に限らないメモ（祝日は休みなど）
+住所
+最終確認日
+メモ
+頼みたいメニュー（複数）
+キーワード（複数）
+最寄り駅（交通機関、駅、徒歩何分などの距離）
+参考画像（複数）
+
+ジャンルは、自由に追加できるようにしておきたい。
+
+データの削除は、論理削除にしておきたい。
+データをすべてDBのテーブルに格納したい。
+
+テーブル設計をして、
+DB_SHOPS_SPEC.mdに整理して。日本語で。
+あとで、このファイルを参照してSQLを作成してもらうので、主キーや外部キーなどの情報も記載しておいて。
+
+
+質問ある？
+
+
