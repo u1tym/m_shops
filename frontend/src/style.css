@@ -266,6 +266,37 @@ textarea {
   padding-top: 0;
 }
 
+.detail-hours-list {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.detail-hours-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  line-height: 1.4;
+}
+
+.detail-hours-day {
+  font-weight: 600;
+  min-width: 2.5rem;
+}
+
+.detail-hours-times {
+  color: #1a1a1a;
+}
+
+.detail-hours-closed {
+  color: #6b7280;
+}
+
+.detail-hours-memo {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
 .detail-slots {
   margin: 0.25rem 0;
   padding-left: 1.1rem;
@@ -514,6 +545,17 @@ textarea {
   height: 120px;
   object-fit: cover;
   border-radius: 8px;
+}
+
+.detail-images {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.detail-images .image-item img {
+  height: auto;
+  max-height: 560px;
+  object-fit: contain;
+  background: #f4f5f7;
 }
 
 .image-item figcaption {

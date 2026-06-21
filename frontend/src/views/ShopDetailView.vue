@@ -120,15 +120,18 @@ watch(
 
         <section v-if="shop.opening_days.length" class="detail-section">
           <h3>営業時間</h3>
-          <div v-for="day in shop.opening_days" :key="day.day_of_week" class="detail-day">
-            <strong>{{ formatDay(day.day_of_week) }}</strong>
-            <ul v-if="day.slots.length" class="detail-slots">
-              <li v-for="(slot, idx) in day.slots" :key="idx">
-                {{ slot.open_time }} ～ {{ slot.close_time }}
-              </li>
-            </ul>
-            <p v-else class="hint">定休</p>
-            <p v-if="day.day_memo" class="day-memo">{{ day.day_memo }}</p>
+          <div class="detail-hours-list">
+            <div v-for="day in shop.opening_days" :key="day.day_of_week" class="detail-hours-row">
+              <span class="detail-hours-day">{{ formatDay(day.day_of_week) }}</span>
+              <span v-if="day.slots.length" class="detail-hours-times">
+                <template v-for="(slot, idx) in day.slots" :key="idx">
+                  <template v-if="idx > 0"> / </template>
+                  {{ slot.open_time }}～{{ slot.close_time }}
+                </template>
+              </span>
+              <span v-else class="detail-hours-closed">定休</span>
+              <span v-if="day.day_memo" class="detail-hours-memo">（{{ day.day_memo }}）</span>
+            </div>
           </div>
         </section>
 
@@ -168,7 +171,7 @@ watch(
 
         <section v-if="shop.images.length" class="detail-section">
           <h3>参考画像</h3>
-          <div class="image-grid">
+          <div class="image-grid detail-images">
             <figure v-for="(image, idx) in shop.images" :key="image.id" class="image-item">
               <img :src="imageUrls[idx]" :alt="image.file_name ?? '参考画像'" />
             </figure>
