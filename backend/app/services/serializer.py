@@ -39,7 +39,7 @@ class ShopSerializer:
     def to_detail(self, shop: Shop) -> ShopDetailOut:
         summary = self.to_summary(shop)
         return ShopDetailOut(
-            **summary.model_dump(),
+            **summary.model_dump(exclude={"stations"}),
             opening_days=self._opening_days(shop),
             menus=self._menus(shop),
             keywords=self._keywords(shop),

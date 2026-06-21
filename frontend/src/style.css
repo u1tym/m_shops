@@ -1,0 +1,360 @@
+:root {
+  color: #1a1a1a;
+  background: #f4f5f7;
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #dde1e6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.header-right {
+  justify-content: flex-end;
+}
+
+.btn-back {
+  border: none;
+  background: none;
+  color: #2563eb;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.page-body {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 1rem;
+  flex: 1;
+}
+
+.btn {
+  border: 1px solid #c5cad1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.btn.small {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.9rem;
+}
+
+.btn.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.btn.danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.search-form,
+.shop-form section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+
+label {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #c5cad1;
+  border-radius: 8px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.hint,
+.status {
+  color: #5f6b7a;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.shop-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.shop-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+
+.shop-name {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.genre-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.tag {
+  background: #eef2ff;
+  color: #3730a3;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.8rem;
+}
+
+.shop-address,
+.shop-memo,
+.station-list {
+  margin: 0.35rem 0 0;
+  color: #4b5563;
+  font-size: 0.92rem;
+}
+
+.station-list {
+  padding-left: 1.1rem;
+}
+
+.shop-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.map-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.map-panel {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 280px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+
+.map-iframe {
+  width: 100%;
+  height: 320px;
+  border: 0;
+}
+
+.map-shop-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.map-shop-item {
+  text-align: left;
+  background: #fff;
+  border: 1px solid #dde1e6;
+  border-radius: 10px;
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.map-shop-item.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 15%);
+}
+
+.map-shop-item .sub {
+  display: block;
+  color: #6b7280;
+  font-size: 0.88rem;
+  margin-top: 0.2rem;
+}
+
+.map-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: #2563eb;
+  font-size: 0.88rem;
+}
+
+@media (min-width: 900px) {
+  .map-layout {
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: start;
+  }
+
+  .map-iframe {
+    height: 480px;
+  }
+}
+
+.opening-hours .day-block,
+.repeat-row,
+.station-row {
+  border-top: 1px solid #edf0f3;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.slot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+.genre-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.checkbox-label input {
+  width: auto;
+  margin: 0;
+}
+
+.paste-zone {
+  border: 2px dashed #94a3b8;
+  border-radius: 10px;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #64748b;
+  background: #f8fafc;
+  outline: none;
+}
+
+.paste-zone:focus {
+  border-color: #2563eb;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.image-item img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.image-item figcaption {
+  font-size: 0.8rem;
+  margin: 0.25rem 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 100;
+}
+
+.modal-card {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.modal-card .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.req {
+  color: #dc2626;
+}
