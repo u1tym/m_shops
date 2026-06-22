@@ -26,6 +26,7 @@ def list_shops(
     search: str | None = Query(default=None),
     open_day_of_week: int | None = Query(default=None, ge=0, le=6),
     open_time: str | None = Query(default=None),
+    has_image: bool | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
     aid: int = Depends(get_aid),
@@ -43,6 +44,7 @@ def list_shops(
         search=search,
         open_day_of_week=open_day_of_week,
         open_time=open_time,
+        has_image=has_image,
         page=page,
         per_page=per_page,
     )

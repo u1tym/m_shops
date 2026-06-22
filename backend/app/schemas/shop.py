@@ -28,12 +28,26 @@ class OpeningSlotOut(BaseModel):
 class OpeningDayInput(BaseModel):
     day_of_week: int = Field(ge=0, le=6)
     day_memo: str | None = None
+    is_closed: bool = False
     slots: list[OpeningSlotInput] = Field(default_factory=list)
 
 
 class OpeningDayOut(BaseModel):
     day_of_week: int
     day_memo: str | None
+    is_closed: bool
+    slots: list[OpeningSlotOut]
+
+
+class HolidayHoursInput(BaseModel):
+    is_closed: bool = False
+    memo: str | None = None
+    slots: list[OpeningSlotInput] = Field(default_factory=list)
+
+
+class HolidayHoursOut(BaseModel):
+    is_closed: bool
+    memo: str | None
     slots: list[OpeningSlotOut]
 
 
@@ -65,8 +79,7 @@ class KeywordOut(BaseModel):
 
 class StationInput(BaseModel):
     id: int | None = None
-    transport_type: str = Field(max_length=50)
-    line_name: str | None = Field(default=None, max_length=100)
+    transport_line: str = Field(max_length=150)
     station_name: str = Field(max_length=100)
     walk_minutes: int | None = Field(default=None, ge=0)
     distance_memo: str | None = None
@@ -76,14 +89,25 @@ class StationInput(BaseModel):
 class StationSummaryOut(BaseModel):
     id: int
     station_name: str
-    transport_type: str
+    transport_line: str
     walk_minutes: int | None
     sort_order: int
 
 
 class StationOut(StationSummaryOut):
-    line_name: str | None
     distance_memo: str | None
+
+
+class VisitInput(BaseModel):
+    id: int | None = None
+    visit_date: date
+    memo: str | None = None
+
+
+class VisitOut(BaseModel):
+    id: int
+    visit_date: date
+    memo: str | None
 
 
 class ImageInput(BaseModel):
@@ -123,9 +147,11 @@ class ShopBaseInput(BaseModel):
     memo: str | None = None
     genre_ids: list[int] = Field(default_factory=list)
     opening_days: list[OpeningDayInput] = Field(default_factory=list)
+    holiday_hours: HolidayHoursInput | None = None
     menus: list[MenuInput] = Field(default_factory=list)
     keywords: list[KeywordInput] = Field(default_factory=list)
     stations: list[StationInput] = Field(default_factory=list)
+    visits: list[VisitInput] = Field(default_factory=list)
     images: list[ImageInput] = Field(default_factory=list)
 
 
@@ -146,18 +172,22 @@ class ShopSummaryOut(BaseModel):
     google_maps_url: str | None
     schedule_memo: str | None
     last_verified_on: date | None
+    last_visit_on: date | None
     memo: str | None
     genres: list[GenreRefOut]
     stations: list[StationSummaryOut]
+    thumbnail: ImageMetaOut | None = None
     created_at: datetime
     updated_at: datetime
 
 
 class ShopDetailOut(ShopSummaryOut):
     opening_days: list[OpeningDayOut]
+    holiday_hours: HolidayHoursOut | None
     menus: list[MenuOut]
     keywords: list[KeywordOut]
     stations: list[StationOut]
+    visits: list[VisitOut]
     images: list[ImageMetaOut]
 
 

@@ -112,17 +112,24 @@ erDiagram
 
 - 1 曜日あたり **複数の営業時間帯**（ランチ・ディナー、休憩前後など）を `shop_opening_slots` で表現する
 - **曜日ごとの補足メモ**（例:「第 2・第 4 水曜定休」）は `shop_opening_days.day_memo` に格納する
-- **曜日に依存しないメモ**（例:「祝日は休み」）は `shops.schedule_memo` に格納する
+- **定休日**は `shop_opening_days.is_closed = true` で明示する（スロットは空でもよい）
+- **祝日の営業時間**は曜日とは別に `shop_holiday_hours` / `shop_holiday_slots` で管理する
+- **曜日に依存しないメモ**（例:「年末年始は要確認」）は `shops.schedule_memo` に格納する
 - 日をまたぐ営業（例 18:00〜翌 2:00）は、`close_time < open_time` を「翌日終了」と解釈する（アプリ側ルール）
-- **定休日**は、その曜日にスロットを登録せず、`day_memo` や `schedule_memo` で記述する（休業専用フラグは設けない）
 
-### 3.6 ジャンルと店舗の関係
+### 3.6 来店日
+
+- 来店日は `shop_visits` に複数行で保持する
+- 一覧・サマリでは `last_visit_on`（最新の `visit_date`）を表示する
+- 詳細では全履歴を返す
+
+### 3.7 ジャンルと店舗の関係
 
 - ジャンルは `shops.genres` でユーザーごとに自由追加する
 - 1 店舗に **複数ジャンル** を付与できる（多対多）。関連は `shops.shop_genres` で管理する
 - 同一店舗への同一ジャンルの重複付与は不可
 
-### 3.7 参考画像
+### 3.8 参考画像
 
 - 画像バイナリは `bytea` カラム `image_data` に格納する
 - `mime_type`（例: `image/jpeg`）と `file_name`（元ファイル名・表示用）を併せて保持する
@@ -247,6 +254,7 @@ erDiagram
 | `aid` | integer | NOT NULL | — | アカウント ID（`shops.aid` と一致） |
 | `day_of_week` | smallint | NOT NULL | — | 曜日（0=日 … 6=土） |
 | `day_memo` | text | NULL | — | その曜日の補足メモ |
+| `is_closed` | boolean | NOT NULL | false | 定休日フラグ |
 | `is_deleted` | boolean | NOT NULL | false | 論理削除フラグ |
 | `created_at` | timestamp | NOT NULL | now() | 作成日時 |
 | `updated_at` | timestamp | NOT NULL | now() | 更新日時 |
@@ -306,6 +314,50 @@ erDiagram
 
 - `open_time = close_time` は不正（アプリでバリデーション）
 - 店舗編集 API では、曜日単位でスロットをまとめて差し替える実装を推奨
+
+---
+
+### 4.5a `shops.shop_holiday_hours`（祝日営業設定）
+
+店舗ごとに 1 件。曜日とは別の祝日営業時間。
+
+| カラム | 型 | NULL | 既定値 | 説明 |
+|--------|-----|------|--------|------|
+| `id` | integer | NOT NULL | シーケンス | 主キー |
+| `shop_id` | integer | NOT NULL | — | 店舗 ID |
+| `aid` | integer | NOT NULL | — | アカウント ID |
+| `is_closed` | boolean | NOT NULL | false | 祝日定休フラグ |
+| `memo` | text | NULL | — | 祝日の補足メモ |
+| `is_deleted` | boolean | NOT NULL | false | 論理削除フラグ |
+| `created_at` | timestamp | NOT NULL | now() | 作成日時 |
+| `updated_at` | timestamp | NOT NULL | now() | 更新日時 |
+
+**インデックス・制約**
+
+| 種別 | 名称（案） | 定義 |
+|------|------------|------|
+| UNIQUE（部分） | `uq_shop_holiday_hours_shop_active` | `(shop_id)` WHERE `is_deleted = false` |
+
+---
+
+### 4.5b `shops.shop_holiday_slots`（祝日営業時間帯）
+
+祝日設定内の複数時間帯。構造は `shop_opening_slots` と同様。
+
+---
+
+### 4.5c `shops.shop_visits`（来店日）
+
+| カラム | 型 | NULL | 既定値 | 説明 |
+|--------|-----|------|--------|------|
+| `id` | integer | NOT NULL | シーケンス | 主キー |
+| `shop_id` | integer | NOT NULL | — | 店舗 ID |
+| `aid` | integer | NOT NULL | — | アカウント ID |
+| `visit_date` | date | NOT NULL | — | 来店日 |
+| `memo` | text | NULL | — | 来店メモ |
+| `is_deleted` | boolean | NOT NULL | false | 論理削除フラグ |
+| `created_at` | timestamp | NOT NULL | now() | 作成日時 |
+| `updated_at` | timestamp | NOT NULL | now() | 更新日時 |
 
 ---
 
@@ -378,8 +430,7 @@ erDiagram
 | `id` | integer | NOT NULL | シーケンス | 主キー |
 | `shop_id` | integer | NOT NULL | — | 店舗 ID |
 | `aid` | integer | NOT NULL | — | アカウント ID |
-| `transport_type` | varchar(50) | NOT NULL | — | 交通機関（例: 電車、地下鉄、バス、その他） |
-| `line_name` | varchar(100) | NULL | — | 路線名（任意） |
+| `transport_line` | varchar(150) | NOT NULL | — | 交通機関・路線名（例: 電車 JR山手線） |
 | `station_name` | varchar(100) | NOT NULL | — | 駅名・停留所名 |
 | `walk_minutes` | smallint | NULL | — | 徒歩分数 |
 | `distance_memo` | text | NULL | — | 距離の補足（徒歩 5 分、バスで 10 分など） |
@@ -405,7 +456,7 @@ erDiagram
 
 **補足**
 
-- `transport_type` は将来 enum 化してもよいが、初版は `varchar` で自由入力＋アプリ側候補リスト
+- `transport_line` は自由入力（例: 電車 JR山手線、地下鉄 銀座線）
 
 ---
 

@@ -15,6 +15,7 @@ const query = ref('')
 const genreId = ref<number | undefined>(undefined)
 const openDayOfWeek = ref<number | undefined>(undefined)
 const openTime = ref('')
+const hasImage = ref<'yes' | 'no'>('no')
 const genres = ref<Genre[]>([])
 const shops = ref<ShopSummary[]>([])
 const loading = ref(false)
@@ -51,6 +52,9 @@ async function loadShops(): Promise<void> {
       params.open_day_of_week = openDayOfWeek.value
       params.open_time = openTime.value
     }
+    if (hasImage.value === 'yes') {
+      params.has_image = true
+    }
     const data = await fetchShops(params)
     shops.value = data.items
   } catch (e) {
@@ -68,7 +72,7 @@ function goCreate(): void {
   router.push({ name: 'create' })
 }
 
-watch([query, genreId, openDayOfWeek, openTime], () => {
+watch([query, genreId, openDayOfWeek, openTime, hasImage], () => {
   void loadShops()
 })
 
@@ -132,6 +136,10 @@ onMounted(async () => {
               title="時刻指定"
             />
           </span>
+          <select v-model="hasImage" class="inline-control" title="参考画像の表示">
+            <option value="no">参考画像: 非表示</option>
+            <option value="yes">参考画像: 表示</option>
+          </select>
         </div>
       </section>
 

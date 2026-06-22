@@ -14,15 +14,19 @@ import {
 import type {
   FormImageItem,
   Genre,
+  HolidayHoursInput,
   KeywordInput,
   MenuInput,
   OpeningDayInput,
   ShopWriteInput,
   StationInput,
+  VisitInput,
 } from '../api/types'
 import AppHeader from '../components/AppHeader.vue'
+import HolidayHoursEditor from '../components/HolidayHoursEditor.vue'
 import ImagePasteArea from '../components/ImagePasteArea.vue'
 import OpeningHoursEditor from '../components/OpeningHoursEditor.vue'
+import VisitDatesEditor from '../components/VisitDatesEditor.vue'
 import { blobToDataUrl, newKey } from '../utils/helpers'
 import { resolveShopImagePath } from '../utils/imageUrl'
 
@@ -48,9 +52,11 @@ const lastVerifiedOn = ref('')
 const memo = ref('')
 const genreIds = ref<number[]>([])
 const openingDays = ref<OpeningDayInput[]>([])
+const holidayHours = ref<HolidayHoursInput | null>(null)
 const menus = ref<MenuInput[]>([])
 const keywords = ref<KeywordInput[]>([])
 const stations = ref<StationInput[]>([])
+const visits = ref<VisitInput[]>([])
 const images = ref<FormImageItem[]>([])
 
 function emptyMenu(): MenuInput {
@@ -63,8 +69,7 @@ function emptyKeyword(): KeywordInput {
 
 function emptyStation(): StationInput {
   return {
-    transport_type: '電車',
-    line_name: '',
+    transport_line: '電車',
     station_name: '',
     walk_minutes: null,
     distance_memo: '',
@@ -93,11 +98,20 @@ async function loadShop(): Promise<void> {
     openingDays.value = shop.opening_days.map((d) => ({
       day_of_week: d.day_of_week,
       day_memo: d.day_memo,
+      is_closed: d.is_closed,
       slots: d.slots.map((s) => ({ ...s })),
     }))
+    holidayHours.value = shop.holiday_hours
+      ? {
+          is_closed: shop.holiday_hours.is_closed,
+          memo: shop.holiday_hours.memo,
+          slots: shop.holiday_hours.slots.map((s) => ({ ...s })),
+        }
+      : null
     menus.value = shop.menus.map((m) => ({ ...m }))
     keywords.value = shop.keywords.map((k) => ({ ...k }))
     stations.value = shop.stations.map((s) => ({ ...s }))
+    visits.value = shop.visits.map((v) => ({ ...v }))
 
     const loadedImages: FormImageItem[] = []
     for (const meta of shop.images) {
@@ -138,6 +152,29 @@ function setTodayVerified(): void {
   lastVerifiedOn.value = `${y}-${m}-${d}`
 }
 
+function buildHolidayHoursPayload(): HolidayHoursInput | null {
+  if (!holidayHours.value) {
+    return null
+  }
+  const hours = holidayHours.value
+  const hasContent =
+    hours.is_closed === true ||
+    hours.slots.length > 0 ||
+    (hours.memo?.trim() ?? '') !== ''
+  if (!hasContent) {
+    return null
+  }
+  return {
+    is_closed: hours.is_closed ?? false,
+    memo: hours.memo?.trim() || null,
+    slots: hours.slots.map((s, index) => ({
+      open_time: s.open_time,
+      close_time: s.close_time,
+      sort_order: index,
+    })),
+  }
+}
+
 function buildPayload(): ShopWriteInput {
   return {
     name: name.value.trim(),
@@ -149,12 +186,14 @@ function buildPayload(): ShopWriteInput {
     opening_days: openingDays.value.map((d) => ({
       day_of_week: d.day_of_week,
       day_memo: d.day_memo?.trim() || null,
+      is_closed: d.is_closed ?? false,
       slots: d.slots.map((s, index) => ({
         open_time: s.open_time,
         close_time: s.close_time,
         sort_order: index,
       })),
     })),
+    holiday_hours: buildHolidayHoursPayload(),
     menus: menus.value
       .filter((m) => m.menu_name.trim())
       .map((m, index) => ({
@@ -174,12 +213,18 @@ function buildPayload(): ShopWriteInput {
       .filter((s) => s.station_name.trim())
       .map((s, index) => ({
         id: s.id,
-        transport_type: s.transport_type.trim(),
-        line_name: s.line_name?.trim() || null,
+        transport_line: s.transport_line.trim(),
         station_name: s.station_name.trim(),
         walk_minutes: s.walk_minutes,
         distance_memo: s.distance_memo?.trim() || null,
         sort_order: index,
+      })),
+    visits: visits.value
+      .filter((v) => v.visit_date)
+      .map((v) => ({
+        id: v.id,
+        visit_date: v.visit_date,
+        memo: v.memo?.trim() || null,
       })),
     images: images.value.map((img, index) => ({
       id: img.id,
@@ -302,6 +347,10 @@ onMounted(async () => {
 
         <OpeningHoursEditor v-model="openingDays" />
 
+        <HolidayHoursEditor v-model="holidayHours" />
+
+        <VisitDatesEditor v-model="visits" />
+
         <section>
           <h3>頼みたいメニュー</h3>
           <div v-for="(menu, index) in menus" :key="index" class="repeat-row">
@@ -324,8 +373,7 @@ onMounted(async () => {
         <section>
           <h3>最寄り駅</h3>
           <div v-for="(st, index) in stations" :key="index" class="station-row">
-            <input v-model="st.transport_type" type="text" placeholder="交通機関" />
-            <input v-model="st.line_name" type="text" placeholder="路線名" />
+            <input v-model="st.transport_line" type="text" placeholder="交通機関・路線（例: 電車 JR山手線）" />
             <input v-model="st.station_name" type="text" placeholder="駅名" />
             <input v-model.number="st.walk_minutes" type="number" min="0" placeholder="徒歩(分)" />
             <input v-model="st.distance_memo" type="text" placeholder="距離メモ" />

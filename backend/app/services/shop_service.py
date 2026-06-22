@@ -35,6 +35,7 @@ class ShopService:
         search: str | None,
         open_day_of_week: int | None,
         open_time: str | None,
+        has_image: bool | None,
         page: int,
         per_page: int,
     ) -> ShopListResponse:
@@ -65,11 +66,17 @@ class ShopService:
             search=search,
             open_day_of_week=open_day_of_week,
             open_time=parsed_open_time,
+            has_image=has_image,
             page=page,
             per_page=per_page,
         )
         return ShopListResponse(
-            items=[self.serializer.to_summary(shop) for shop in shops],
+            items=[
+                self.serializer.to_summary(
+                    shop, include_thumbnail=has_image is True
+                )
+                for shop in shops
+            ],
             total=total,
             page=page,
             per_page=per_page,
@@ -202,6 +209,7 @@ class ShopService:
                 {
                     "day_of_week": day.day_of_week,
                     "day_memo": day.day_memo,
+                    "is_closed": day.is_closed,
                     "slots": [
                         {
                             "open_time": slot.open_time,
@@ -213,6 +221,25 @@ class ShopService:
                 }
                 for day in payload.opening_days
             ],
+        )
+        holiday = payload.holiday_hours
+        self.repo.replace_holiday_hours(
+            shop,
+            aid,
+            None
+            if holiday is None
+            else {
+                "is_closed": holiday.is_closed,
+                "memo": holiday.memo,
+                "slots": [
+                    {
+                        "open_time": slot.open_time,
+                        "close_time": slot.close_time,
+                        "sort_order": slot.sort_order,
+                    }
+                    for slot in holiday.slots
+                ],
+            },
         )
         self.repo.sync_menus(
             shop,
@@ -245,14 +272,25 @@ class ShopService:
             [
                 {
                     "id": station.id,
-                    "transport_type": station.transport_type,
-                    "line_name": station.line_name,
+                    "transport_line": station.transport_line,
                     "station_name": station.station_name,
                     "walk_minutes": station.walk_minutes,
                     "distance_memo": station.distance_memo,
                     "sort_order": station.sort_order,
                 }
                 for station in payload.stations
+            ],
+        )
+        self.repo.sync_visits(
+            shop,
+            aid,
+            [
+                {
+                    "id": visit.id,
+                    "visit_date": visit.visit_date,
+                    "memo": visit.memo,
+                }
+                for visit in payload.visits
             ],
         )
         self.repo.sync_images(shop, aid, self._build_image_payloads(shop, aid, payload.images))

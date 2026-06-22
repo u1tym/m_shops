@@ -20,6 +20,7 @@ const shop = ref<ShopDetail | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const imageUrls = ref<string[]>([])
+const showVisitHistory = ref(false)
 
 async function loadShop(): Promise<void> {
   loading.value = true
@@ -113,6 +114,25 @@ watch(
           <p>{{ shop.last_verified_on }}</p>
         </section>
 
+        <section v-if="shop.last_visit_on || shop.visits.length" class="detail-section">
+          <h3>来店日</h3>
+          <p v-if="shop.last_visit_on">最終来店: {{ shop.last_visit_on }}</p>
+          <button
+            v-if="shop.visits.length > 1"
+            type="button"
+            class="btn small"
+            @click="showVisitHistory = !showVisitHistory"
+          >
+            {{ showVisitHistory ? '履歴を閉じる' : `履歴を表示（${shop.visits.length}件）` }}
+          </button>
+          <ul v-if="showVisitHistory" class="visit-history">
+            <li v-for="visit in shop.visits" :key="visit.id">
+              {{ visit.visit_date }}
+              <span v-if="visit.memo" class="sub">（{{ visit.memo }}）</span>
+            </li>
+          </ul>
+        </section>
+
         <section v-if="shop.schedule_memo" class="detail-section">
           <h3>営業メモ</h3>
           <p class="pre-wrap">{{ shop.schedule_memo }}</p>
@@ -123,14 +143,35 @@ watch(
           <div class="detail-hours-list">
             <div v-for="day in shop.opening_days" :key="day.day_of_week" class="detail-hours-row">
               <span class="detail-hours-day">{{ formatDay(day.day_of_week) }}</span>
-              <span v-if="day.slots.length" class="detail-hours-times">
+              <span v-if="day.is_closed" class="detail-hours-closed">定休</span>
+              <span v-else-if="day.slots.length" class="detail-hours-times">
                 <template v-for="(slot, idx) in day.slots" :key="idx">
                   <template v-if="idx > 0"> / </template>
                   {{ slot.open_time }}～{{ slot.close_time }}
                 </template>
               </span>
-              <span v-else class="detail-hours-closed">定休</span>
+              <span v-else class="detail-hours-closed">未設定</span>
               <span v-if="day.day_memo" class="detail-hours-memo">（{{ day.day_memo }}）</span>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="shop.holiday_hours" class="detail-section">
+          <h3>祝日の営業時間</h3>
+          <div class="detail-hours-list">
+            <div class="detail-hours-row">
+              <span class="detail-hours-day">祝日</span>
+              <span v-if="shop.holiday_hours.is_closed" class="detail-hours-closed">定休</span>
+              <span v-else-if="shop.holiday_hours.slots.length" class="detail-hours-times">
+                <template v-for="(slot, idx) in shop.holiday_hours.slots" :key="idx">
+                  <template v-if="idx > 0"> / </template>
+                  {{ slot.open_time }}～{{ slot.close_time }}
+                </template>
+              </span>
+              <span v-else class="detail-hours-closed">未設定</span>
+              <span v-if="shop.holiday_hours.memo" class="detail-hours-memo">
+                （{{ shop.holiday_hours.memo }}）
+              </span>
             </div>
           </div>
         </section>
@@ -156,8 +197,7 @@ watch(
           <h3>最寄り駅</h3>
           <ul>
             <li v-for="st in shop.stations" :key="st.id">
-              {{ st.station_name }}（{{ st.transport_type }}
-              <template v-if="st.line_name">・{{ st.line_name }}</template>
+              {{ st.station_name }}（{{ st.transport_line }}
               <template v-if="st.walk_minutes != null">・徒歩{{ st.walk_minutes }}分</template>）
               <span v-if="st.distance_memo" class="sub">{{ st.distance_memo }}</span>
             </li>

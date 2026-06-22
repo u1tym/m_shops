@@ -62,9 +62,11 @@ class Shop(Base):
 
     genre_links: Mapped[list["ShopGenre"]] = relationship(back_populates="shop")
     opening_days: Mapped[list["ShopOpeningDay"]] = relationship(back_populates="shop")
+    holiday_hours: Mapped[list["ShopHolidayHours"]] = relationship(back_populates="shop")
     menus: Mapped[list["ShopMenu"]] = relationship(back_populates="shop")
     keywords: Mapped[list["ShopKeyword"]] = relationship(back_populates="shop")
     stations: Mapped[list["ShopStation"]] = relationship(back_populates="shop")
+    visits: Mapped[list["ShopVisit"]] = relationship(back_populates="shop")
     images: Mapped[list["ShopImage"]] = relationship(back_populates="shop")
 
 
@@ -104,6 +106,7 @@ class ShopOpeningDay(Base):
     aid: Mapped[int] = mapped_column(Integer, nullable=False)
     day_of_week: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     day_memo: Mapped[str | None] = mapped_column(Text)
+    is_closed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
@@ -138,6 +141,53 @@ class ShopOpeningSlot(Base):
     )
 
     opening_day: Mapped["ShopOpeningDay"] = relationship(back_populates="slots")
+
+
+class ShopHolidayHours(Base):
+    __tablename__ = "shop_holiday_hours"
+    __table_args__ = {"schema": "shops"}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shops.id"), nullable=False
+    )
+    aid: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_closed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    memo: Mapped[str | None] = mapped_column(Text)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    shop: Mapped["Shop"] = relationship(back_populates="holiday_hours")
+    slots: Mapped[list["ShopHolidaySlot"]] = relationship(back_populates="holiday_hours")
+
+
+class ShopHolidaySlot(Base):
+    __tablename__ = "shop_holiday_slots"
+    __table_args__ = {"schema": "shops"}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    holiday_hours_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_holiday_hours.id"), nullable=False
+    )
+    shop_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    aid: Mapped[int] = mapped_column(Integer, nullable=False)
+    open_time: Mapped[time] = mapped_column(Time, nullable=False)
+    close_time: Mapped[time] = mapped_column(Time, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    holiday_hours: Mapped["ShopHolidayHours"] = relationship(back_populates="slots")
 
 
 class ShopMenu(Base):
@@ -194,8 +244,7 @@ class ShopStation(Base):
         Integer, ForeignKey("shops.shops.id"), nullable=False
     )
     aid: Mapped[int] = mapped_column(Integer, nullable=False)
-    transport_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    line_name: Mapped[str | None] = mapped_column(String(100))
+    transport_line: Mapped[str] = mapped_column(String(150), nullable=False)
     station_name: Mapped[str] = mapped_column(String(100), nullable=False)
     walk_minutes: Mapped[int | None] = mapped_column(SmallInteger)
     distance_memo: Mapped[str | None] = mapped_column(Text)
@@ -209,6 +258,28 @@ class ShopStation(Base):
     )
 
     shop: Mapped["Shop"] = relationship(back_populates="stations")
+
+
+class ShopVisit(Base):
+    __tablename__ = "shop_visits"
+    __table_args__ = {"schema": "shops"}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shops.id"), nullable=False
+    )
+    aid: Mapped[int] = mapped_column(Integer, nullable=False)
+    visit_date: Mapped[date] = mapped_column(Date, nullable=False)
+    memo: Mapped[str | None] = mapped_column(Text)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    shop: Mapped["Shop"] = relationship(back_populates="visits")
 
 
 class ShopImage(Base):

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+
 import type { Genre, ShopSearchParams } from '../api/types'
 
 const model = defineModel<ShopSearchParams>({ required: true })
@@ -10,6 +12,24 @@ defineProps<{
 const emit = defineEmits<{
   search: []
 }>()
+
+const imageDisplay = ref<'yes' | 'no'>(model.value.has_image === true ? 'yes' : 'no')
+
+watch(
+  () => model.value.has_image,
+  (value) => {
+    imageDisplay.value = value === true ? 'yes' : 'no'
+  },
+)
+
+function onHasImageChange(value: string): void {
+  imageDisplay.value = value as 'yes' | 'no'
+  if (value === 'yes') {
+    model.value.has_image = true
+  } else {
+    delete model.value.has_image
+  }
+}
 </script>
 
 <template>
@@ -29,6 +49,8 @@ const emit = defineEmits<{
         キーワード
         <input v-model="model.keyword" type="text" />
       </label>
+    </div>
+    <div class="field-row">
       <label>
         ジャンル
         <select
@@ -37,6 +59,16 @@ const emit = defineEmits<{
         >
           <option value="">すべて</option>
           <option v-for="g in genres" :key="g.id" :value="g.id">{{ g.name }}</option>
+        </select>
+      </label>
+      <label>
+        参考画像
+        <select
+          :value="imageDisplay"
+          @change="onHasImageChange(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="no">非表示</option>
+          <option value="yes">表示</option>
         </select>
       </label>
     </div>

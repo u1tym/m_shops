@@ -1,18 +1,21 @@
 from datetime import date, datetime, time
 
 from sqlalchemy import and_, func, or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from app.models import (
     Genre,
     Shop,
     ShopGenre,
+    ShopHolidayHours,
+    ShopHolidaySlot,
     ShopImage,
     ShopKeyword,
     ShopMenu,
     ShopOpeningDay,
     ShopOpeningSlot,
     ShopStation,
+    ShopVisit,
 )
 
 
@@ -35,9 +38,11 @@ class ShopRepository:
             .options(
                 selectinload(Shop.genre_links).selectinload(ShopGenre.genre),
                 selectinload(Shop.opening_days).selectinload(ShopOpeningDay.slots),
+                selectinload(Shop.holiday_hours).selectinload(ShopHolidayHours.slots),
                 selectinload(Shop.menus),
                 selectinload(Shop.keywords),
                 selectinload(Shop.stations),
+                selectinload(Shop.visits),
                 selectinload(Shop.images),
             )
         )
@@ -55,6 +60,7 @@ class ShopRepository:
         search: str | None = None,
         open_day_of_week: int | None = None,
         open_time: time | None = None,
+        has_image: bool | None = None,
         page: int = 1,
         per_page: int = 20,
     ) -> tuple[list[Shop], int]:
@@ -166,14 +172,30 @@ class ShopRepository:
         total = int(self.db.scalar(count_stmt) or 0)
 
         offset = (page - 1) * per_page
+        load_options = [
+            selectinload(Shop.genre_links).selectinload(ShopGenre.genre),
+            selectinload(Shop.stations),
+            selectinload(Shop.visits),
+        ]
+        if has_image is True:
+            load_options.append(
+                selectinload(Shop.images).options(
+                    load_only(
+                        ShopImage.id,
+                        ShopImage.shop_id,
+                        ShopImage.file_name,
+                        ShopImage.mime_type,
+                        ShopImage.file_size_bytes,
+                        ShopImage.sort_order,
+                        ShopImage.is_deleted,
+                    )
+                )
+            )
         stmt = (
             base.order_by(Shop.updated_at.desc())
             .offset(offset)
             .limit(per_page)
-            .options(
-                selectinload(Shop.genre_links).selectinload(ShopGenre.genre),
-                selectinload(Shop.stations),
-            )
+            .options(*load_options)
         )
         items = list(self.db.scalars(stmt).unique().all())
         return items, total
@@ -295,6 +317,7 @@ class ShopRepository:
                 aid=aid,
                 day_of_week=day_input["day_of_week"],
                 day_memo=day_input.get("day_memo"),
+                is_closed=day_input.get("is_closed", False),
             )
             self.db.add(day)
             self.db.flush()
@@ -309,6 +332,46 @@ class ShopRepository:
                         sort_order=slot_input.get("sort_order", 0),
                     )
                 )
+
+    def replace_holiday_hours(
+        self,
+        shop: Shop,
+        aid: int,
+        holiday_hours: dict | None,
+    ) -> None:
+        for hours in shop.holiday_hours:
+            if not hours.is_deleted:
+                hours.is_deleted = True
+                hours.updated_at = datetime.now()
+                self.db.add(hours)
+                for slot in hours.slots:
+                    if not slot.is_deleted:
+                        slot.is_deleted = True
+                        slot.updated_at = datetime.now()
+                        self.db.add(slot)
+
+        if holiday_hours is None:
+            return
+
+        hours = ShopHolidayHours(
+            shop_id=shop.id,
+            aid=aid,
+            is_closed=holiday_hours.get("is_closed", False),
+            memo=holiday_hours.get("memo"),
+        )
+        self.db.add(hours)
+        self.db.flush()
+        for slot_input in holiday_hours.get("slots", []):
+            self.db.add(
+                ShopHolidaySlot(
+                    holiday_hours_id=hours.id,
+                    shop_id=shop.id,
+                    aid=aid,
+                    open_time=slot_input["open_time"],
+                    close_time=slot_input["close_time"],
+                    sort_order=slot_input.get("sort_order", 0),
+                )
+            )
 
     def sync_menus(self, shop: Shop, aid: int, menus: list[dict]) -> None:
         self._sync_child_items(
@@ -350,14 +413,28 @@ class ShopRepository:
             factory=lambda data: ShopStation(
                 shop_id=shop.id,
                 aid=aid,
-                transport_type=data["transport_type"],
-                line_name=data.get("line_name"),
+                transport_line=data["transport_line"],
                 station_name=data["station_name"],
                 walk_minutes=data.get("walk_minutes"),
                 distance_memo=data.get("distance_memo"),
                 sort_order=data.get("sort_order", 0),
             ),
             updater=lambda item, data: self._update_station(item, data),
+        )
+
+    def sync_visits(self, shop: Shop, aid: int, visits: list[dict]) -> None:
+        self._sync_child_items(
+            shop=shop,
+            aid=aid,
+            existing=shop.visits,
+            inputs=visits,
+            factory=lambda data: ShopVisit(
+                shop_id=shop.id,
+                aid=aid,
+                visit_date=data["visit_date"],
+                memo=data.get("memo"),
+            ),
+            updater=lambda item, data: self._update_visit(item, data),
         )
 
     def sync_images(self, shop: Shop, aid: int, images: list[dict]) -> None:
@@ -441,10 +518,15 @@ class ShopRepository:
 
     @staticmethod
     def _update_station(item: ShopStation, data: dict) -> None:
-        item.transport_type = data["transport_type"]
-        item.line_name = data.get("line_name")
+        item.transport_line = data["transport_line"]
         item.station_name = data["station_name"]
         item.walk_minutes = data.get("walk_minutes")
         item.distance_memo = data.get("distance_memo")
         item.sort_order = data.get("sort_order", item.sort_order)
+        item.updated_at = datetime.now()
+
+    @staticmethod
+    def _update_visit(item: ShopVisit, data: dict) -> None:
+        item.visit_date = data["visit_date"]
+        item.memo = data.get("memo")
         item.updated_at = datetime.now()

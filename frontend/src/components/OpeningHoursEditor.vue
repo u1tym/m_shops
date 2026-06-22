@@ -19,14 +19,23 @@ function getDay(dow: number): OpeningDayInput {
     dayMap.value.get(dow) ?? {
       day_of_week: dow,
       day_memo: '',
+      is_closed: false,
       slots: [],
     }
   )
 }
 
+function hasContent(day: OpeningDayInput): boolean {
+  return (
+    day.is_closed === true ||
+    day.slots.length > 0 ||
+    (day.day_memo?.trim() ?? '') !== ''
+  )
+}
+
 function commitDays(nextDays: OpeningDayInput[]): void {
   days.value = nextDays
-    .filter((d) => d.slots.length > 0 || (d.day_memo?.trim() ?? '') !== '')
+    .filter(hasContent)
     .sort((a, b) => a.day_of_week - b.day_of_week)
 }
 
@@ -37,13 +46,17 @@ function updateDay(dow: number, patch: Partial<OpeningDayInput>): void {
   commitDays([...others, next])
 }
 
+function toggleClosed(dow: number, closed: boolean): void {
+  updateDay(dow, { is_closed: closed })
+}
+
 function addSlot(dow: number): void {
   const day = getDay(dow)
   const slots: OpeningSlotInput[] = [
     ...day.slots,
     { open_time: '11:00', close_time: '14:00', sort_order: day.slots.length },
   ]
-  updateDay(dow, { slots })
+  updateDay(dow, { slots, is_closed: false })
 }
 
 function removeSlot(dow: number, index: number): void {
@@ -62,7 +75,7 @@ function patchSlot(dow: number, index: number, patch: Partial<OpeningSlotInput>)
 
 function copyToOtherDays(sourceDow: number): void {
   const source = getDay(sourceDow)
-  if (source.slots.length === 0) {
+  if (source.slots.length === 0 && !source.is_closed) {
     return
   }
   const label = DAY_LABELS[sourceDow]
@@ -78,6 +91,7 @@ function copyToOtherDays(sourceDow: number): void {
     sort_order: index,
   }))
   const memoCopy = source.day_memo ?? ''
+  const closedCopy = source.is_closed ?? false
 
   const nextDays: OpeningDayInput[] = []
   for (let dow = 0; dow < 7; dow += 1) {
@@ -87,6 +101,7 @@ function copyToOtherDays(sourceDow: number): void {
       nextDays.push({
         day_of_week: dow,
         day_memo: memoCopy,
+        is_closed: closedCopy,
         slots: slotsCopy.map((slot) => ({ ...slot })),
       })
     }
@@ -103,7 +118,20 @@ function copyToOtherDays(sourceDow: number): void {
       <div class="day-label">{{ DAY_LABELS[dow - 1] }}曜</div>
 
       <div class="day-content">
-        <template v-if="getDay(dow - 1).slots.length === 0">
+        <label class="closed-flag">
+          <input
+            type="checkbox"
+            :checked="getDay(dow - 1).is_closed === true"
+            @change="toggleClosed(dow - 1, ($event.target as HTMLInputElement).checked)"
+          />
+          定休日
+        </label>
+
+        <template v-if="getDay(dow - 1).is_closed">
+          <p class="closed-note">定休日として登録されます</p>
+        </template>
+
+        <template v-else-if="getDay(dow - 1).slots.length === 0">
           <div class="day-actions">
             <button type="button" class="btn small" @click="addSlot(dow - 1)">時間帯を追加</button>
           </div>
@@ -146,7 +174,7 @@ function copyToOtherDays(sourceDow: number): void {
           <input
             type="text"
             :value="getDay(dow - 1).day_memo ?? ''"
-            placeholder="定休など"
+            placeholder="第2・第4水曜定休 など"
             @input="updateDay(dow - 1, { day_memo: ($event.target as HTMLInputElement).value })"
           />
         </label>

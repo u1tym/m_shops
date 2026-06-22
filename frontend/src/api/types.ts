@@ -13,13 +13,12 @@ export interface Genre extends GenreRef {
 export interface StationSummary {
   id: number
   station_name: string
-  transport_type: string
+  transport_line: string
   walk_minutes: number | null
   sort_order: number
 }
 
 export interface Station extends StationSummary {
-  line_name: string | null
   distance_memo: string | null
 }
 
@@ -32,7 +31,20 @@ export interface OpeningSlot {
 export interface OpeningDay {
   day_of_week: number
   day_memo: string | null
+  is_closed: boolean
   slots: OpeningSlot[]
+}
+
+export interface HolidayHours {
+  is_closed: boolean
+  memo: string | null
+  slots: OpeningSlot[]
+}
+
+export interface Visit {
+  id: number
+  visit_date: string
+  memo: string | null
 }
 
 export interface Menu {
@@ -64,18 +76,23 @@ export interface ShopSummary {
   google_maps_url: string | null
   schedule_memo: string | null
   last_verified_on: string | null
+  last_visit_on: string | null
   memo: string | null
   genres: GenreRef[]
   stations: StationSummary[]
+  /** has_image=true 指定時のみ。先頭1枚のメタデータ（表示用。検索件数には影響しない） */
+  thumbnail?: ImageMeta | null
   created_at: string
   updated_at: string
 }
 
 export interface ShopDetail extends ShopSummary {
   opening_days: OpeningDay[]
+  holiday_hours: HolidayHours | null
   menus: Menu[]
   keywords: Keyword[]
   stations: Station[]
+  visits: Visit[]
   images: ImageMeta[]
 }
 
@@ -103,6 +120,8 @@ export interface ShopSearchParams {
   search?: string
   open_day_of_week?: number
   open_time?: string
+  /** true=一覧に参考画像を表示（件数の絞り込みには使わない） */
+  has_image?: boolean
   page?: number
   per_page?: number
 }
@@ -116,7 +135,20 @@ export interface OpeningSlotInput {
 export interface OpeningDayInput {
   day_of_week: number
   day_memo?: string | null
+  is_closed?: boolean
   slots: OpeningSlotInput[]
+}
+
+export interface HolidayHoursInput {
+  is_closed?: boolean
+  memo?: string | null
+  slots: OpeningSlotInput[]
+}
+
+export interface VisitInput {
+  id?: number
+  visit_date: string
+  memo?: string | null
 }
 
 export interface MenuInput {
@@ -134,8 +166,7 @@ export interface KeywordInput {
 
 export interface StationInput {
   id?: number
-  transport_type: string
-  line_name?: string | null
+  transport_line: string
   station_name: string
   walk_minutes?: number | null
   distance_memo?: string | null
@@ -158,9 +189,11 @@ export interface ShopWriteInput {
   memo?: string | null
   genre_ids: number[]
   opening_days: OpeningDayInput[]
+  holiday_hours?: HolidayHoursInput | null
   menus: MenuInput[]
   keywords: KeywordInput[]
   stations: StationInput[]
+  visits: VisitInput[]
   images: ImageInput[]
 }
 

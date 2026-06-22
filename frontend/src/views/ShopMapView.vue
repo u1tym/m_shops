@@ -23,6 +23,7 @@ const search = ref<ShopSearchParams>({
   location: String(route.query.location ?? ''),
   keyword: String(route.query.keyword ?? ''),
   genre_id: route.query.genre_id ? Number(route.query.genre_id) : undefined,
+  has_image: route.query.has_image === 'true' ? true : undefined,
   q: String(route.query.q ?? ''),
   page: 1,
   per_page: 100,
@@ -56,6 +57,7 @@ async function loadShops(): Promise<void> {
       if (search.value.location?.trim()) params.location = search.value.location.trim()
       if (search.value.keyword?.trim()) params.keyword = search.value.keyword.trim()
       if (search.value.genre_id) params.genre_id = search.value.genre_id
+      if (search.value.has_image === true) params.has_image = true
     }
     const data = await fetchShops(params)
     shops.value = data.items
@@ -86,6 +88,7 @@ function buildQuery(): Record<string, string> {
   if (search.value.keyword?.trim()) q.keyword = search.value.keyword.trim()
   if (search.value.q?.trim()) q.q = search.value.q.trim()
   if (search.value.genre_id) q.genre_id = String(search.value.genre_id)
+  if (search.value.has_image === true) q.has_image = 'true'
   return q
 }
 
