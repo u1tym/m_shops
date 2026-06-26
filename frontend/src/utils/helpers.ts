@@ -1,7 +1,18 @@
 export const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'] as const
 
-export function mapsEmbedUrl(address: string): string {
-  return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=15&output=embed`
+export function buildMapQuery(address: string, prefecture?: string | null): string {
+  const trimmed = address.trim()
+  const pref = prefecture?.trim()
+  if (pref && trimmed) {
+    return `${pref}${trimmed}`
+  }
+  return pref || trimmed
+}
+
+/** Google マップ埋め込み URL（q= で住所を指定し、マーカー付きで表示） */
+export function mapsEmbedUrl(address: string, prefecture?: string | null): string {
+  const query = buildMapQuery(address, prefecture)
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`
 }
 
 export function newKey(): string {

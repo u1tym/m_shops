@@ -440,6 +440,10 @@ textarea {
   font-size: 0.88rem;
 }
 
+.detail-map {
+  margin-top: 0.75rem;
+}
+
 @media (min-width: 900px) {
   .map-layout {
     grid-template-columns: 1.2fr 0.8fr;

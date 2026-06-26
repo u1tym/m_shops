@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { getErrorMessage } from '../api/auth'
 import { fetchImageBlob, fetchShop } from '../api/shopsClient'
 import type { ShopDetail } from '../api/types'
 import AppHeader from '../components/AppHeader.vue'
-import { DAY_LABELS } from '../utils/helpers'
+import { DAY_LABELS, mapsEmbedUrl } from '../utils/helpers'
 import { resolveShopImagePath } from '../utils/imageUrl'
 
 const props = defineProps<{
@@ -58,6 +58,13 @@ function formatDay(dow: number): string {
   return `${DAY_LABELS[dow]}曜`
 }
 
+const mapEmbedUrl = computed(() => {
+  if (!shop.value?.address) {
+    return null
+  }
+  return mapsEmbedUrl(shop.value.address, shop.value.prefecture)
+})
+
 onMounted(() => {
   void loadShop()
 })
@@ -99,6 +106,15 @@ watch(
         <section v-if="shop.address" class="detail-section">
           <h3>住所</h3>
           <p>{{ shop.address }}</p>
+          <div v-if="mapEmbedUrl" class="map-panel detail-map">
+            <iframe
+              :src="mapEmbedUrl"
+              class="map-iframe"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              :title="`${shop.name}の地図`"
+            />
+          </div>
           <a
             v-if="shop.google_maps_url"
             :href="shop.google_maps_url"

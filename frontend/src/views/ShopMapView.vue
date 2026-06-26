@@ -35,7 +35,7 @@ const embedUrl = computed(() => {
   if (!selectedShop.value?.address) {
     return null
   }
-  return mapsEmbedUrl(selectedShop.value.address)
+  return mapsEmbedUrl(selectedShop.value.address, selectedShop.value.prefecture)
 })
 
 async function loadGenres(): Promise<void> {
