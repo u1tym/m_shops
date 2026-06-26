@@ -50,10 +50,6 @@ onUnmounted(() => {
     :class="{ 'shop-card--clickable': clickable, 'shop-card--with-thumb': !!thumbnailUrl }"
     @click="clickable ? emit('click') : undefined"
   >
-    <div v-if="thumbnailUrl" class="shop-card-thumb">
-      <img :src="thumbnailUrl" :alt="shop.thumbnail?.file_name ?? '参考画像'" />
-    </div>
-
     <div class="shop-card-body">
       <div class="shop-card-head">
         <h2 class="shop-name">{{ shop.name }}</h2>
@@ -74,6 +70,10 @@ onUnmounted(() => {
       <div v-if="$slots.actions" class="shop-card-actions" @click.stop>
         <slot name="actions" />
       </div>
+    </div>
+
+    <div v-if="thumbnailUrl" class="shop-card-thumb">
+      <img :src="thumbnailUrl" :alt="shop.thumbnail?.file_name ?? '参考画像'" />
     </div>
   </article>
 </template>
