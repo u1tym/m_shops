@@ -68,7 +68,7 @@ function removeImage(key: string): void {
     >
       ここに画像を貼り付け
     </div>
-    <div v-if="images.length" class="image-grid">
+    <div v-if="images.length" class="image-grid detail-images">
       <figure v-for="img in images" :key="img.key" class="image-item">
         <img :src="img.previewUrl" :alt="img.file_name ?? '参考画像'" />
         <figcaption>{{ img.file_name ?? '画像' }}</figcaption>
