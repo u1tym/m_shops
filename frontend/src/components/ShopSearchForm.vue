@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 
 import type { Genre, ShopSearchParams } from '../api/types'
+import { PREFECTURES } from '../utils/prefectures'
 
 const model = defineModel<ShopSearchParams>({ required: true })
 
@@ -51,6 +52,18 @@ function onHasImageChange(value: string): void {
       </label>
     </div>
     <div class="field-row">
+      <label>
+        都道府県
+        <select
+          :value="model.prefecture ?? ''"
+          @change="
+            model.prefecture = ($event.target as HTMLSelectElement).value || undefined
+          "
+        >
+          <option value="">すべて</option>
+          <option v-for="p in PREFECTURES" :key="p" :value="p">{{ p }}</option>
+        </select>
+      </label>
       <label>
         ジャンル
         <select

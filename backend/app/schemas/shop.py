@@ -1,6 +1,8 @@
 from datetime import date, datetime, time
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from app.utils.prefectures import PREFECTURE_SET, normalize_prefecture
 
 
 class MessageResponse(BaseModel):
@@ -141,6 +143,7 @@ class GenreRefOut(BaseModel):
 
 class ShopBaseInput(BaseModel):
     name: str = Field(max_length=200)
+    prefecture: str | None = Field(default=None, max_length=10)
     address: str | None = None
     schedule_memo: str | None = None
     last_verified_on: date | None = None
@@ -153,6 +156,14 @@ class ShopBaseInput(BaseModel):
     stations: list[StationInput] = Field(default_factory=list)
     visits: list[VisitInput] = Field(default_factory=list)
     images: list[ImageInput] = Field(default_factory=list)
+
+    @field_validator("prefecture")
+    @classmethod
+    def validate_prefecture(cls, value: str | None) -> str | None:
+        normalized = normalize_prefecture(value)
+        if normalized is not None and normalized not in PREFECTURE_SET:
+            raise ValueError("都道府県が不正です")
+        return normalized
 
 
 class ShopCreateInput(ShopBaseInput):
@@ -168,6 +179,7 @@ class ShopSummaryOut(BaseModel):
 
     id: int
     name: str
+    prefecture: str | None
     address: str | None
     google_maps_url: str | None
     schedule_memo: str | None

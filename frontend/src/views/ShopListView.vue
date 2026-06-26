@@ -8,10 +8,12 @@ import type { Genre, ShopSummary } from '../api/types'
 import AppHeader from '../components/AppHeader.vue'
 import ShopCard from '../components/ShopCard.vue'
 import { DAY_LABELS } from '../utils/helpers'
+import { PREFECTURES } from '../utils/prefectures'
 
 const router = useRouter()
 
 const query = ref('')
+const prefecture = ref('')
 const genreId = ref<number | undefined>(undefined)
 const openDayOfWeek = ref<number | undefined>(undefined)
 const openTime = ref('')
@@ -24,6 +26,7 @@ const error = ref<string | null>(null)
 const hasActiveFilters = (): boolean => {
   return (
     query.value.trim() !== '' ||
+    prefecture.value !== '' ||
     genreId.value !== undefined ||
     (openDayOfWeek.value !== undefined && openTime.value !== '')
   )
@@ -44,6 +47,9 @@ async function loadShops(): Promise<void> {
     }
     if (trimmed) {
       params.search = trimmed
+    }
+    if (prefecture.value) {
+      params.prefecture = prefecture.value
     }
     if (genreId.value !== undefined) {
       params.genre_id = genreId.value
@@ -72,7 +78,7 @@ function goCreate(): void {
   router.push({ name: 'create' })
 }
 
-watch([query, genreId, openDayOfWeek, openTime, hasImage], () => {
+watch([query, prefecture, genreId, openDayOfWeek, openTime, hasImage], () => {
   void loadShops()
 })
 
@@ -101,6 +107,10 @@ onMounted(async () => {
           />
         </label>
         <div class="list-search-filters">
+          <select v-model="prefecture" class="inline-control" title="都道府県">
+            <option value="">都道府県</option>
+            <option v-for="p in PREFECTURES" :key="p" :value="p">{{ p }}</option>
+          </select>
           <select
             class="inline-control"
             :value="genreId ?? ''"

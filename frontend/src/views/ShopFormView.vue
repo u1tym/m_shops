@@ -28,6 +28,7 @@ import ImagePasteArea from '../components/ImagePasteArea.vue'
 import OpeningHoursEditor from '../components/OpeningHoursEditor.vue'
 import VisitDatesEditor from '../components/VisitDatesEditor.vue'
 import { blobToDataUrl, newKey } from '../utils/helpers'
+import { PREFECTURES } from '../utils/prefectures'
 import { resolveShopImagePath } from '../utils/imageUrl'
 
 const props = defineProps<{
@@ -46,6 +47,7 @@ const saving = ref(false)
 const error = ref<string | null>(null)
 
 const name = ref('')
+const prefecture = ref('')
 const address = ref('')
 const scheduleMemo = ref('')
 const lastVerifiedOn = ref('')
@@ -90,6 +92,7 @@ async function loadShop(): Promise<void> {
   try {
     const { shop } = await fetchShop(shopId.value)
     name.value = shop.name
+    prefecture.value = shop.prefecture ?? ''
     address.value = shop.address ?? ''
     scheduleMemo.value = shop.schedule_memo ?? ''
     lastVerifiedOn.value = shop.last_verified_on ?? ''
@@ -178,6 +181,7 @@ function buildHolidayHoursPayload(): HolidayHoursInput | null {
 function buildPayload(): ShopWriteInput {
   return {
     name: name.value.trim(),
+    prefecture: prefecture.value || null,
     address: address.value.trim() || null,
     schedule_memo: scheduleMemo.value.trim() || null,
     last_verified_on: lastVerifiedOn.value || null,
@@ -301,6 +305,13 @@ onMounted(async () => {
           <label>
             店名 <span class="req">*</span>
             <input v-model="name" type="text" required maxlength="200" />
+          </label>
+          <label>
+            都道府県
+            <select v-model="prefecture">
+              <option value="">未選択</option>
+              <option v-for="p in PREFECTURES" :key="p" :value="p">{{ p }}</option>
+            </select>
           </label>
           <label>
             住所

@@ -27,6 +27,7 @@ class ShopSerializer:
         return ShopSummaryOut(
             id=shop.id,
             name=shop.name,
+            prefecture=shop.prefecture,
             address=shop.address,
             google_maps_url=build_google_maps_url(shop.address),
             schedule_memo=shop.schedule_memo,

@@ -72,6 +72,7 @@ export interface ImageMeta {
 export interface ShopSummary {
   id: number
   name: string
+  prefecture: string | null
   address: string | null
   google_maps_url: string | null
   schedule_memo: string | null
@@ -120,6 +121,7 @@ export interface ShopSearchParams {
   search?: string
   open_day_of_week?: number
   open_time?: string
+  prefecture?: string
   /** true=一覧に参考画像を表示（件数の絞り込みには使わない） */
   has_image?: boolean
   page?: number
@@ -183,6 +185,7 @@ export interface ImageInput {
 
 export interface ShopWriteInput {
   name: string
+  prefecture?: string | null
   address?: string | null
   schedule_memo?: string | null
   last_verified_on?: string | null

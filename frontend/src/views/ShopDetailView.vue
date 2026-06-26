@@ -93,6 +93,7 @@ watch(
           <div v-if="shop.genres.length" class="genre-tags">
             <span v-for="g in shop.genres" :key="g.id" class="tag">{{ g.name }}</span>
           </div>
+          <p v-if="shop.prefecture" class="detail-prefecture">{{ shop.prefecture }}</p>
         </section>
 
         <section v-if="shop.address" class="detail-section">

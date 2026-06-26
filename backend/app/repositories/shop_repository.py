@@ -60,6 +60,7 @@ class ShopRepository:
         search: str | None = None,
         open_day_of_week: int | None = None,
         open_time: time | None = None,
+        prefecture: str | None = None,
         has_image: bool | None = None,
         page: int = 1,
         per_page: int = 20,
@@ -136,6 +137,9 @@ class ShopRepository:
                     .distinct()
                 )
                 base = base.where(Shop.id.in_(sub_kw))
+
+        if prefecture is not None:
+            base = base.where(Shop.prefecture == prefecture)
 
         if genre_id is not None:
             sub_genre = (
@@ -232,6 +236,7 @@ class ShopRepository:
         self,
         aid: int,
         name: str,
+        prefecture: str | None,
         address: str | None,
         schedule_memo: str | None,
         last_verified_on: date | None,
@@ -240,6 +245,7 @@ class ShopRepository:
         shop = Shop(
             aid=aid,
             name=name,
+            prefecture=prefecture,
             address=address,
             schedule_memo=schedule_memo,
             last_verified_on=last_verified_on,

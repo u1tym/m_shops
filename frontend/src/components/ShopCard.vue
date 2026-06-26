@@ -61,6 +61,7 @@ onUnmounted(() => {
           <span v-for="g in shop.genres" :key="g.id" class="tag">{{ g.name }}</span>
         </div>
       </div>
+      <p v-if="shop.prefecture" class="shop-prefecture">{{ shop.prefecture }}</p>
       <p v-if="shop.address" class="shop-address">{{ shop.address }}</p>
       <p v-if="shop.last_visit_on" class="shop-last-visit">最終来店: {{ shop.last_visit_on }}</p>
       <ul v-if="shop.stations.length" class="station-list">

@@ -48,6 +48,7 @@ class Shop(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     aid: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    prefecture: Mapped[str | None] = mapped_column(String(10))
     address: Mapped[str | None] = mapped_column(Text)
     schedule_memo: Mapped[str | None] = mapped_column(Text)
     last_verified_on: Mapped[date | None] = mapped_column(Date)

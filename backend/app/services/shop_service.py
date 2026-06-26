@@ -15,6 +15,7 @@ from app.schemas.shop import (
 )
 from app.services.serializer import ShopSerializer
 from app.utils.images import decode_image_base64, validate_mime_type
+from app.utils.prefectures import PREFECTURE_SET, normalize_prefecture
 
 
 class ShopService:
@@ -35,6 +36,7 @@ class ShopService:
         search: str | None,
         open_day_of_week: int | None,
         open_time: str | None,
+        prefecture: str | None,
         has_image: bool | None,
         page: int,
         per_page: int,
@@ -56,6 +58,12 @@ class ShopService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="営業時刻の検索には曜日と時刻の両方が必要です",
             )
+        normalized_prefecture = normalize_prefecture(prefecture)
+        if normalized_prefecture is not None and normalized_prefecture not in PREFECTURE_SET:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="都道府県が不正です",
+            )
         shops, total = self.repo.search(
             aid,
             station=station,
@@ -66,6 +74,7 @@ class ShopService:
             search=search,
             open_day_of_week=open_day_of_week,
             open_time=parsed_open_time,
+            prefecture=normalized_prefecture,
             has_image=has_image,
             page=page,
             per_page=per_page,
@@ -98,6 +107,7 @@ class ShopService:
         shop = self.repo.create_shop(
             aid=aid,
             name=payload.name,
+            prefecture=payload.prefecture,
             address=payload.address,
             schedule_memo=payload.schedule_memo,
             last_verified_on=payload.last_verified_on,
@@ -133,6 +143,7 @@ class ShopService:
         self._validate_unique_keywords(payload.keywords)
 
         shop.name = payload.name
+        shop.prefecture = payload.prefecture
         shop.address = payload.address
         shop.schedule_memo = payload.schedule_memo
         shop.last_verified_on = payload.last_verified_on
